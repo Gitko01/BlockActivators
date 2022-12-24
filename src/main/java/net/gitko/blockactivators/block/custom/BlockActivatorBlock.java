@@ -43,8 +43,6 @@ public class BlockActivatorBlock extends BlockWithEntity {
         BlockActivatorBlockEntity be = new BlockActivatorBlockEntity(pos, state);
 
         EnergyStorage.SIDED.registerForBlockEntity((blockActivatorBlockEntity, direction) -> be.energyStorage, ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY);
-        // TEMPORARY
-        be.energyStorage.amount = 100000;
 
         return be;
     }
