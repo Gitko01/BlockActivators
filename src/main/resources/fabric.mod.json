@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "blockactivators",
+  "version": "${version}",
+
+  "name": "Block Activators",
+  "description": "Adds in a replica of the Autonomous Activator from Thermal Expansion. An autonomous activator is a block that automates tasks such as right clicking and left clicking on blocks and entities with various items and blocks.",
+  "authors": [
+    "Gitko / MrCrazyMan109"
+  ],
+  "contact": {
+    "homepage": "https://gitko01.github.io/",
+    "sources": "https://github.com/Gitko01/BlockActivators"
+  },
+
+  "license": "Chace Pratt's Modified MIT License",
+  "icon": "assets/blockactivators/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.gitko.blockactivators.BlockActivators"
+    ],
+    "client": [
+      "net.gitko.blockactivators.BlockActivatorsClient"
+    ]
+  },
+  "mixins": [
+    "blockactivators.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.14.12",
+    "fabric-api": "*",
+    "minecraft": "~1.19",
+    "java": ">=17"
+  },
+  "suggests": {
+    "techreborn": "*"
+  }
+}

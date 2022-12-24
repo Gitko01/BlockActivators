@@ -1,0 +1,123 @@
+package net.gitko.blockactivators.gui;
+
+import net.gitko.blockactivators.BlockActivators;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.Inventory;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.screen.ArrayPropertyDelegate;
+import net.minecraft.screen.PropertyDelegate;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.slot.Slot;
+import net.minecraft.util.math.BlockPos;
+
+// Handles the "code" side of the GUI (like detecting button presses and placing the slot's hitboxes)
+public class BlockActivatorScreenHandler extends ScreenHandler {
+    private final Inventory inventory;
+    private BlockPos pos;
+    private int mode;
+    PropertyDelegate energyAmountPropertyDelegate;
+
+    //This constructor gets called on the client when the server wants it to open the screenHandler,
+    //The client will call the other constructor with an empty Inventory and the screenHandler will automatically
+    //sync this empty inventory with the inventory on the server.
+    public BlockActivatorScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf packetByteBuf) {
+        this(syncId, playerInventory, new SimpleInventory(9), new ArrayPropertyDelegate(2));
+        this.pos = packetByteBuf.readBlockPos();
+        this.mode = packetByteBuf.readInt();
+    }
+
+    //This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
+    //and can therefore directly provide it as an argument. This inventory will then be synced to the client.
+    public BlockActivatorScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate energyAmountPropertyDelegate) {
+        super(BlockActivators.BLOCK_ACTIVATOR_SCREEN_HANDLER, syncId);
+
+        // placeholders for server
+        pos = BlockPos.ORIGIN;
+        mode = 0;
+
+        // energy amount and drain rate
+        this.energyAmountPropertyDelegate = energyAmountPropertyDelegate;
+        this.addProperties(energyAmountPropertyDelegate);
+
+        checkSize(inventory, 9);
+        this.inventory = inventory;
+        //some inventories do custom logic when a player opens it.
+        inventory.onOpen(playerInventory.player);
+
+        //This will place the slot in the correct locations for a 3x3 Grid. The slots exist on both server and client!
+        //This will not render the background of the slots however, this is the Screens job
+        int m;
+        int l;
+        //Our inventory
+        for (m = 0; m < 3; ++m) {
+            for (l = 0; l < 3; ++l) {
+                // for "textures/gui/container/dispenser.png"
+                //this.addSlot(new Slot(inventory, l + m * 3, 62 + l * 18, 17 + m * 18));
+
+                // for block activator screen texture
+                this.addSlot(new Slot(inventory, l + m * 3, 116 + l * 18, 17 + m * 18));
+            }
+        }
+        //The player inventory
+        for (m = 0; m < 3; ++m) {
+            for (l = 0; l < 9; ++l) {
+                this.addSlot(new Slot(playerInventory, l + m * 9 + 9, 8 + l * 18, 84 + m * 18));
+            }
+        }
+        //The player Hotbar
+        for (m = 0; m < 9; ++m) {
+            this.addSlot(new Slot(playerInventory, m, 8 + m * 18, 142));
+        }
+    }
+
+    @Override
+    public boolean canUse(PlayerEntity player) {
+        return this.inventory.canPlayerUse(player);
+    }
+
+    // Shift + Player Inv Slot
+    @Override
+    public ItemStack transferSlot(PlayerEntity player, int invSlot) {
+        ItemStack newStack = ItemStack.EMPTY;
+        Slot slot = this.slots.get(invSlot);
+        if (slot.hasStack()) {
+            ItemStack originalStack = slot.getStack();
+            newStack = originalStack.copy();
+            if (invSlot < this.inventory.size()) {
+                if (!this.insertItem(originalStack, this.inventory.size(), this.slots.size(), true)) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (!this.insertItem(originalStack, 0, this.inventory.size(), false)) {
+                return ItemStack.EMPTY;
+            }
+
+            if (originalStack.isEmpty()) {
+                slot.setStack(ItemStack.EMPTY);
+            } else {
+                slot.markDirty();
+            }
+        }
+
+        return newStack;
+    }
+
+    public BlockPos getPos() {
+        return this.pos;
+    }
+
+    public int getMode() {
+        return this.mode;
+    }
+
+    public int getEnergyAmount(){
+        return energyAmountPropertyDelegate.get(0);
+    }
+
+    public int getDrainRate(){
+        return energyAmountPropertyDelegate.get(1);
+    }
+
+}

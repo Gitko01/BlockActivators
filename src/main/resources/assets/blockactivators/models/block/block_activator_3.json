@@ -1,0 +1,12 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "particle": "blockactivators:block/block_activator-sides",
+    "down": "blockactivators:block/block_activator-sides",
+    "up": "blockactivators:block/block_activator-sides",
+    "north": "blockactivators:block/block_activator-front-3",
+    "east": "blockactivators:block/block_activator-sides",
+    "south": "blockactivators:block/block_activator-sides",
+    "west": "blockactivators:block/block_activator-sides"
+  }
+}

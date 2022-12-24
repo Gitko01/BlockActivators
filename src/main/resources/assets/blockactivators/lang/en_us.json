@@ -1,0 +1,15 @@
+{
+  "itemGroup.blockactivators.tab": "Block Activators",
+
+  "block.blockactivators.block_activator": "Block Activator",
+
+  "tooltip.blockactivators.hold_shift": "Hold §3SHIFT§r for more information",
+
+  "tooltip.blockactivators.block_activator_1": "A machine powered by Tech Reborn energy ",
+  "tooltip.blockactivators.block_activator_2": "that can be used to right and left click ",
+  "tooltip.blockactivators.block_activator_3": "blocks and entities with various items and blocks.",
+
+  "guiButton.blockactivators.block_activator.switchMode": "Mode",
+  "guiButton.blockactivators.block_activator.leftClick": "left click",
+  "guiButton.blockactivators.block_activator.rightClick": "right click"
+}

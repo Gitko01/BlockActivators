@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.gitko.blockactivators.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "LivingEntityMixin"
+  ],
+  "client": [
+    "BlockActivatorsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

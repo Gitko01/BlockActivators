@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north,anim=1": { "model": "blockactivators:block/block_activator_1" },
+    "facing=east,anim=1":  { "model": "blockactivators:block/block_activator_1", "y":  90 },
+    "facing=south,anim=1": { "model": "blockactivators:block/block_activator_1", "y": 180 },
+    "facing=west,anim=1":  { "model": "blockactivators:block/block_activator_1", "y": 270 },
+    "facing=north,anim=2": { "model": "blockactivators:block/block_activator_2" },
+    "facing=east,anim=2":  { "model": "blockactivators:block/block_activator_2", "y":  90 },
+    "facing=south,anim=2": { "model": "blockactivators:block/block_activator_2", "y": 180 },
+    "facing=west,anim=2":  { "model": "blockactivators:block/block_activator_2", "y": 270},
+    "facing=north,anim=3": { "model": "blockactivators:block/block_activator_3" },
+    "facing=east,anim=3":  { "model": "blockactivators:block/block_activator_3", "y":  90},
+    "facing=south,anim=3": { "model": "blockactivators:block/block_activator_3", "y": 180},
+    "facing=west,anim=3":  { "model": "blockactivators:block/block_activator_3", "y": 270},
+    "facing=north,anim=4": { "model": "blockactivators:block/block_activator_4" },
+    "facing=east,anim=4":  { "model": "blockactivators:block/block_activator_4", "y":  90},
+    "facing=south,anim=4": { "model": "blockactivators:block/block_activator_4", "y": 180},
+    "facing=west,anim=4":  { "model": "blockactivators:block/block_activator_4", "y": 270}
+  }
+}
