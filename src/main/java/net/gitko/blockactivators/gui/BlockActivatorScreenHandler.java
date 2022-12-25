@@ -18,6 +18,7 @@ public class BlockActivatorScreenHandler extends ScreenHandler {
     private final Inventory inventory;
     private BlockPos pos;
     private int mode;
+    private boolean roundRobin;
     PropertyDelegate energyAmountPropertyDelegate;
 
     //This constructor gets called on the client when the server wants it to open the screenHandler,
@@ -27,6 +28,7 @@ public class BlockActivatorScreenHandler extends ScreenHandler {
         this(syncId, playerInventory, new SimpleInventory(9), new ArrayPropertyDelegate(2));
         this.pos = packetByteBuf.readBlockPos();
         this.mode = packetByteBuf.readInt();
+        this.roundRobin = packetByteBuf.readBoolean();
     }
 
     //This constructor gets called from the BlockEntity on the server without calling the other constructor first, the server knows the inventory of the container
@@ -37,6 +39,7 @@ public class BlockActivatorScreenHandler extends ScreenHandler {
         // placeholders for server
         pos = BlockPos.ORIGIN;
         mode = 0;
+        roundRobin = false;
 
         // energy amount and drain rate
         this.energyAmountPropertyDelegate = energyAmountPropertyDelegate;
@@ -110,6 +113,10 @@ public class BlockActivatorScreenHandler extends ScreenHandler {
 
     public int getMode() {
         return this.mode;
+    }
+
+    public boolean getRoundRobin() {
+        return this.roundRobin;
     }
 
     public int getEnergyAmount(){

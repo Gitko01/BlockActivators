@@ -38,9 +38,11 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
     BlockActivatorScreenHandler screenHandler;
 
     private CyclingButtonWidget<Modes> modeButton = null;
+    private CyclingButtonWidget<RoundRobinModes> roundRobinButton = null;
 
     private BlockPos blockPos = null;
     private int mode = -1;
+    private boolean roundRobin = false;
 
     public enum Modes {
         LEFT_CLICK(1, "leftClick"),
@@ -87,10 +89,77 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
         }
     }
 
+    public enum RoundRobinModes {
+        ON(1, "on", true),
+        OFF(0, "off", false);
+
+        private static final BlockActivatorScreen.RoundRobinModes[] BY_NAME = (BlockActivatorScreen.RoundRobinModes[]) Arrays.stream(values()).sorted(Comparator.comparingInt(BlockActivatorScreen.RoundRobinModes::getId)).toArray(RoundRobinModes[]::new);
+        private final int id;
+        private final String name;
+        private final boolean on;
+
+        private RoundRobinModes(int id, String name, boolean on) {
+            this.id = id;
+            this.name = name;
+            this.on = on;
+        }
+
+        public int getId() {
+            return this.id;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public boolean isOn() {
+            return this.on;
+        }
+
+        public Text getTranslatableName() {
+            return Text.translatable("guiButton.blockactivators.block_activator." + this.name);
+        }
+
+        public static BlockActivatorScreen.RoundRobinModes byOrdinal(int ordinal) {
+            return BY_NAME[ordinal % BY_NAME.length];
+        }
+
+        @Nullable
+        public static BlockActivatorScreen.RoundRobinModes byName(String name) {
+            BlockActivatorScreen.RoundRobinModes[] var1 = values();
+            int var2 = var1.length;
+
+            for(int var3 = 0; var3 < var2; ++var3) {
+                BlockActivatorScreen.RoundRobinModes mode = var1[var3];
+                if (mode.name.equals(name)) {
+                    return mode;
+                }
+            }
+
+            return null;
+        }
+
+        @Nullable
+        public static BlockActivatorScreen.RoundRobinModes byValue(boolean value) {
+            BlockActivatorScreen.RoundRobinModes[] var1 = values();
+            int var2 = var1.length;
+
+            for(int var3 = 0; var3 < var2; ++var3) {
+                BlockActivatorScreen.RoundRobinModes mode = var1[var3];
+                if (mode.on == value) {
+                    return mode;
+                }
+            }
+
+            return null;
+        }
+    }
+
     public BlockActivatorScreen(BlockActivatorScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
         blockPos = getPos(handler).orElse(null);
         mode = getMode(handler);
+        roundRobin = getRoundRobin(handler);
         screenHandler = handler;
     }
 
@@ -105,11 +174,11 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
 
         // progress bar
         int maxUnitFill = 100000;
-        int pBLength = 102;
-        int pBHeight = 14;
+        int pBLength = 50;
+        int pBHeight = 5;
 
-        int xMargin = 9;
-        int yMargin = 55;
+        int xMargin = 117;
+        int yMargin = 74;
 
         int energy = getEnergyAmount(screenHandler);
         int drainRate = getDrainRate(screenHandler);
@@ -127,8 +196,6 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
         this.drawTexture(matrices, x + xMargin, y + yMargin, 1, 167, fillLength, pBHeight);
 
         // render a tooltip containing energy amount
-        // 0 / 100000 E
-        // 0% charged
         if (mouseX >= x + xMargin && mouseX <= (x + xMargin) + pBLength) {
             if (mouseY >= y + yMargin && mouseY <= (y + yMargin) + pBHeight) {
                 DefaultedList<Text> tooltip = DefaultedList.ofSize(0);
@@ -182,7 +249,7 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
         // Center the title
         titleX = (backgroundWidth - textRenderer.getWidth(title)) / 2;
 
-        // Add the switch mode button
+        // Add the switch mode button and the round-robin button
         // center screen: this.width / 2 - 66 (-66 bc width is 64 and 2 offset)
         // top left gui: (width - backgroundWidth) / 2 as X, (height - backgroundHeight) / 2 as Y
 
@@ -197,6 +264,13 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
             );
         }
 
+        yMargin = 42;
+        if (roundRobinButton == null) {
+            roundRobinButton = this.addDrawableChild(createRoundRobinButtonWidget(
+                    0, x, y, xMargin, yMargin, 96, 20, "guiButton.blockactivators.block_activator.switchRoundRobin", client)
+            );
+        }
+
         if (mode == -1) {
             BlockActivators.LOGGER.error("[Block Activators] Mode for a block activator is -1! Big problem!");
         }
@@ -208,9 +282,13 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
         });
     }
 
-    private void switchMode(Modes mode, MinecraftClient client) {
-        BlockActivators.LOGGER.info(String.format("New mode: %s", mode.toString()));
+    public CyclingButtonWidget<RoundRobinModes> createRoundRobinButtonWidget(int buttonIndex, int x, int y, int xMargin, int yMargin, int buttonWidth, int buttonHeight, String translationKey, MinecraftClient client) {
+        return CyclingButtonWidget.builder(RoundRobinModes::getTranslatableName).values(RoundRobinModes.values()).initially(RoundRobinModes.byValue(roundRobin)).build(x + xMargin, y + yMargin, buttonWidth, buttonHeight, Text.translatable(translationKey), (button, mode) -> {
+            switchRoundRobin(mode, client);
+        });
+    }
 
+    private void switchMode(Modes mode, MinecraftClient client) {
         client.execute(() -> {
             // ORDER
             // int modeID = buf.readInt();
@@ -220,6 +298,19 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
             buf.writeBlockPos(this.blockPos);
 
             ClientPlayNetworking.send(new Identifier(BlockActivators.MOD_ID, "update_click_mode_packet"), buf);
+        });
+    }
+
+    private void switchRoundRobin(RoundRobinModes mode, MinecraftClient client) {
+        client.execute(() -> {
+            // ORDER
+            // boolean roundRobin = buf.readBoolean();
+            // BlockPos pos = buf.readBlockPos();
+            PacketByteBuf buf = PacketByteBufs.create();
+            buf.writeBoolean(mode.isOn());
+            buf.writeBlockPos(this.blockPos);
+
+            ClientPlayNetworking.send(new Identifier(BlockActivators.MOD_ID, "update_round_robin_packet"), buf);
         });
     }
 
@@ -237,6 +328,14 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
             return ((BlockActivatorScreenHandler) handler).getMode();
         } else {
             return -1;
+        }
+    }
+
+    private static boolean getRoundRobin(ScreenHandler handler) {
+        if (handler instanceof BlockActivatorScreenHandler) {
+            return ((BlockActivatorScreenHandler) handler).getRoundRobin();
+        } else {
+            return false;
         }
     }
 

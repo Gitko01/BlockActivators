@@ -1,5 +1,5 @@
 # Block Activators
-![TBBC gem](/src/main/resources/assets/blockactivators/icon.png "Block Activators mod icon")
+![Block Activators mod icon](/src/main/resources/assets/blockactivators/icon.png "Block Activators mod icon")
 ### A Minecraft mod made using Fabric that adds in a replica of the Autonomous Activator from Thermal Expansion
 
 This mod adds in a replica of the Autonomous Activator from Thermal Expansion.
@@ -16,8 +16,9 @@ There are a couple places you can download this mod from.
 # Versions
 - 1.19.2 Fabric
 
-# Changelog (v1.0.0 -> v1.0.0)
-First public release!
+# Changelog (v1.0.0 -> v1.1.0)
+- Round-robin support
+- Code cleanup
 
 # Bugs
 Please report all bugs to this GitHub repo's issues section.
@@ -28,6 +29,5 @@ The autonomous activator was NOT made by me, so thanks to the developers of Ther
 [Fake Player API](https://github.com/CafeteriaGuild/fake-player-api)
 
 # Future Features / Versions
-1.19.1 and 1.19.3 coming soon
-I'm working on round-robin support for the items inside
-the block activator right now.
+- 1.19.1 and 1.19.3 coming soon
+- Tick interval modification (change how often the block activator updates)

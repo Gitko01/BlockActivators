@@ -3,19 +3,19 @@ package net.gitko.blockactivators.block.custom;
 import com.mojang.authlib.GameProfile;
 import dev.cafeteria.fakeplayerapi.server.FakeServerPlayer;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.gitko.blockactivators.BlockActivators;
 import net.gitko.blockactivators.block.ModBlocks;
 import net.gitko.blockactivators.gui.BlockActivatorScreenHandler;
 import net.gitko.blockactivators.util.ImplementedInventory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.*;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventories;
-import net.minecraft.item.*;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
@@ -39,14 +39,11 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.UUID;
 
 import static net.gitko.blockactivators.BlockActivators.createFakePlayerBuilder;
-
-// Quick note: Some code in this file (specifically parts of the tick function) is modified code from
-// dmkenza's Click Machine mod: https://github.com/dmkenza/ClickMachine_Fabric
-// The way the code is written out and used is a bit different from dmkenza's system, but I still wanted to give credit
-// where it is most definitely due.
 
 public class BlockActivatorBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory {
     public BlockActivatorBlockEntity(BlockPos pos, BlockState state) {
@@ -61,7 +58,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     private int lastSelectedItem = -1;
 
-    private boolean roundRobin = true;
+    private boolean roundRobin = false;
 
     // Create energy storage for block activator
     public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 10000, 10000) {
@@ -126,6 +123,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         // used in BlockActivatorScreenHandler
         packetByteBuf.writeBlockPos(pos);
         packetByteBuf.writeInt(mode);
+        packetByteBuf.writeBoolean(roundRobin);
     }
 
     private FakeServerPlayer fakeServerPlayer = null;
@@ -139,14 +137,11 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         // ENTITY CLICKING ----------------------------------------------------DONE
         // ENERGY CONSUMPTION--------------------------------------------------DONE
         // MAKE SURE ONLY ONE FASTEST TOOL, AND ALSO ENSURE ONLY ONE ACTIVATOR IS UPDATING BLOCK DAMAGE----------DONE
+        // BETTER TOOLTIPS FOR BLOCK ACTIVATORS--------------------------------DONE
+        // ROUND ROBIN---------------------------------------------------------DONE
         // BLOCK PLACE SETTING
         // SPLASH POTION / THROW MODE
-        // ROUND ROBIN
         // ENCHANTS AFFECTING MINING
-        // BETTER TOOLTIPS FOR BLOCK ACTIVATORS
-        // FIX THE IMPORTS
-        // RENAME MOD TO AUTOMATONS?
-        // DEPENDENCIES IN CURSEFORGE
 
         if (!world.isClient()) {
             // mode 0: right click
@@ -168,7 +163,6 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                 be.fakeServerPlayer.setId(randomInt);
                 be.fakeServerPlayer.setUuid(UUID.randomUUID());
                 be.id = randomInt;
-                BlockActivators.LOGGER.info(String.valueOf(randomInt));
             }
 
             Direction facing = BlockActivatorBlock.getFacing(state);
@@ -208,7 +202,6 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         if (be.roundRobin) {
                             lastNonAirItem = items.indexOf(itemStack);
                             allAir = false;
-                            BlockActivators.LOGGER.info(String.valueOf(itemStack));
                         }
                     }
                 }
@@ -240,17 +233,12 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     }
                 }
 
-                BlockActivators.LOGGER.info(items.toString());
-                BlockActivators.LOGGER.info(String.valueOf(be.lastSelectedItem));
-
                 // add the item to the fake player's inventory
                 be.fakeServerPlayer.getInventory().main.set(0, itemToClickWith);
                 be.fakeServerPlayer.getInventory().selectedSlot = 0;
 
                 if (be.mode == 0) {
                     // right click
-
-                    // ADD RIGHT CLICK TO ENTITIES
 
                     // Animation (slowly open)
                     if (world.getBlockState(pos).get(IntProperty.of("anim", 1, 4)) <= 1) {
@@ -287,8 +275,6 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
                     DamageSource dmgSource = DamageSource.player(be.fakeServerPlayer);
                     List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, Box.from(posToHitVec3d), e -> (
-                            //e.getType() != EntityType.PLAYER &&
-                            //e.getType() != EntityType.ARMOR_STAND &&
                             !e.isInvulnerableTo(dmgSource) &&
                             !e.isDead()
                     ));
@@ -374,8 +360,6 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                 if (!progressList.contains(be.id)) {
                     progressList.put(be.id, destroyProgress);
                 } else {
-                    // If a block activator is removed and placed back down, it won't restore the original destruction progress
-                    // maybe use player ids as identifiers instead to prevent one new block activator overriding another one's progress
                     progressList.remove(be.id);
                     progressList.put(be.id, destroyProgress);
                 }
@@ -515,20 +499,24 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         this.mode = modeID;
     }
 
+    public void setRoundRobin(boolean on) {
+        this.roundRobin = on;
+    }
+
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         Inventories.readNbt(nbt, items);
         this.mode = nbt.getInt("mode");
+        this.roundRobin = nbt.getBoolean("roundRobin");
         this.energyStorage.amount = nbt.getLong("energyAmount");
-        //tickCount = nbt.getInt("tickCount");
     }
 
     @Override
     public void writeNbt(NbtCompound nbt) {
-        //nbt.putInt("tickCount", tickCount);
         Inventories.writeNbt(nbt, items);
         nbt.putInt("mode", this.mode);
+        nbt.putBoolean("roundRobin", this.roundRobin);
         nbt.putLong("energyAmount", this.energyStorage.amount);
         super.writeNbt(nbt);
     }

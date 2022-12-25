@@ -11,5 +11,9 @@
 
   "guiButton.blockactivators.block_activator.switchMode": "Mode",
   "guiButton.blockactivators.block_activator.leftClick": "left click",
-  "guiButton.blockactivators.block_activator.rightClick": "right click"
+  "guiButton.blockactivators.block_activator.rightClick": "right click",
+
+  "guiButton.blockactivators.block_activator.switchRoundRobin": "Round robin",
+  "guiButton.blockactivators.block_activator.on": "on",
+  "guiButton.blockactivators.block_activator.off": "off"
 }
