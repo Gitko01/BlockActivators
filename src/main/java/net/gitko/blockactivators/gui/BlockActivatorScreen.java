@@ -203,9 +203,9 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
                 if (Screen.hasShiftDown()) {
                     tooltip.add(Text.of(String.format("§6%1$s / %2$s E§r", energy, maxUnitFill)));
 
-                    if (energyPercentage < 10) {
+                    if (energyPercentage <= 10) {
                         tooltip.add(Text.of("§4" + energyPercentage + "% Charged§r"));
-                    } else if (energyPercentage < 75) {
+                    } else if (energyPercentage <= 75) {
                         tooltip.add(Text.of("§e" + energyPercentage + "% Charged§r"));
                     } else {
                         tooltip.add(Text.of("§a" + energyPercentage + "% Charged§r"));
@@ -214,17 +214,17 @@ public class BlockActivatorScreen extends HandledScreen<BlockActivatorScreenHand
                     tooltip.add(Text.of("<----------------->"));
 
                     tooltip.add(Text.of("§6Max Energy: 100,000 E§r"));
-                    tooltip.add(Text.of("§6Max Input Rate: 10,000 E§r"));
+                    tooltip.add(Text.of("§6Max Input Rate: 2,500 E§r"));
                     tooltip.add(Text.of("§6Drain Rate: -" + drainRate + " E/t§r"));
                 } else {
                     // §number §r
                     tooltip.add(Text.of(String.format("§6%1$s / %2$s E§r", energy, maxUnitFill)));
 
-                    if (energyPercentage < 10) {
+                    if (energyPercentage <= 10) {
                         tooltip.add(Text.of("§4" + energyPercentage + "% Charged§r"));
-                    } else if (energyPercentage > 10 && energyPercentage < 75) {
+                    } else if (energyPercentage <= 75) {
                         tooltip.add(Text.of("§e" + energyPercentage + "% Charged§r"));
-                    } else if (energyPercentage > 75) {
+                    } else {
                         tooltip.add(Text.of("§a" + energyPercentage + "% Charged§r"));
                     }
 

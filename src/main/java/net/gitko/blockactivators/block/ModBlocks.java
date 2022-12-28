@@ -29,7 +29,7 @@ public class ModBlocks {
     public static final Block BLOCK_ACTIVATOR = registerBlock("block_activator",
             new BlockActivatorBlock(FabricBlockSettings.of(
                             Material.METAL)
-                    .strength(6f, 6f)
+                    .strength(5f, 6f)
                     .requiresTool()
             ), ModItemGroup.TAB, "tooltip.blockactivators.block_activator", 3, true);
 

@@ -48,7 +48,7 @@ dependencies {
 
 	modImplementation include ("dev.cafeteria:fake-player-api:${project.fakeplayerapi_version}")
 
-	include modApi('teamreborn:energy:2.3.0') {
+	include modApi("teamreborn:energy:${project.energyapi_version}") {
 		exclude(group: "net.fabricmc.fabric-api")
 	}
 

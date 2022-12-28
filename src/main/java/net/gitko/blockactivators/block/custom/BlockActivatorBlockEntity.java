@@ -37,6 +37,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
 import java.util.Hashtable;
@@ -53,6 +54,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     private int tickCount = 0;
     private int destroyTickCount = 0;
     private int tickInterval = 10;
+    private final static int ENERGY_DECRESE_PER_TICK_INTERVAL = 25;
 
     private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
 
@@ -61,7 +63,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     private boolean roundRobin = false;
 
     // Create energy storage for block activator
-    public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 10000, 10000) {
+    public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 2500, 0) {
         @Override
         protected void onFinalCommit() {
             markDirty();
@@ -75,7 +77,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
             if (index == 0) {
                 return (int) energyStorage.getAmount();
             } else {
-                return (int) (100 / tickInterval);
+                return (int) (ENERGY_DECRESE_PER_TICK_INTERVAL / tickInterval);
             }
         }
 
@@ -183,10 +185,10 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                 }
             }
 
-            if (be.getTickCount() == be.getTickInterval() && be.energyStorage.amount >= 10) {
+            if (be.getTickCount() >= be.getTickInterval() && be.energyStorage.amount >= ENERGY_DECRESE_PER_TICK_INTERVAL) {
                 be.setTickCount(0);
 
-                be.energyStorage.amount -= 100;
+                be.energyStorage.amount -= ENERGY_DECRESE_PER_TICK_INTERVAL;
                 be.markDirty();
 
                 // Handle clicking with items
@@ -537,5 +539,9 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         if (!world.isClient()) {
             world.markDirty(getPos());
         }
+    }
+
+    public void registerEnergyStorage() {
+        EnergyStorage.SIDED.registerForBlockEntity((myBlockEntity, direction) -> myBlockEntity.energyStorage, ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY);
     }
 }

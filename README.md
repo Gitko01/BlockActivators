@@ -16,16 +16,20 @@ There are a couple places you can download this mod from.
 # Versions
 - 1.19.2 Fabric
 
-# Changelog (v1.0.0 -> v1.1.0)
-- Round-robin support
-- Code cleanup
+# Changelog (v1.1.0 -> v1.2.0)
+- Fixed TechReborn Energy implementation for the Block Activator
+- Fixed energy percentage error for the Block Activator GUI
+- Fixed a bug where the Block Activator wouldn't activate when tick count was above tick interval amount
+- Balanced energy input rate and drain rate for the Block Activator
+- Added a recipe for the Block Activator
+- Added a block drop for the Block Activator
 
 # Bugs
 Please report all bugs to this GitHub repo's issues section.
 
 # Credits and Libraries Used
 Thanks to the developers of FabricMC and Fake Player API!  
-The autonomous activator was NOT made by me, so thanks to the developers of Thermal Expansion!  
+The Autonomous Activator (the entire inspiration for this mod) was NOT made by me, so thanks to the developers of Thermal Expansion who made it!  
 [Fake Player API](https://github.com/CafeteriaGuild/fake-player-api)
 
 # Future Features / Versions

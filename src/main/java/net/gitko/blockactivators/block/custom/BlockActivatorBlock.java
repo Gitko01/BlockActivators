@@ -2,7 +2,10 @@ package net.gitko.blockactivators.block.custom;
 
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.gitko.blockactivators.block.ModBlocks;
-import net.minecraft.block.*;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.BlockWithEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityTicker;
 import net.minecraft.block.entity.BlockEntityType;
@@ -20,7 +23,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import team.reborn.energy.api.EnergyStorage;
 
 public class BlockActivatorBlock extends BlockWithEntity {
     public BlockActivatorBlock(Settings settings) {
@@ -42,7 +44,7 @@ public class BlockActivatorBlock extends BlockWithEntity {
     public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
         BlockActivatorBlockEntity be = new BlockActivatorBlockEntity(pos, state);
 
-        EnergyStorage.SIDED.registerForBlockEntity((blockActivatorBlockEntity, direction) -> be.energyStorage, ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY);
+        be.registerEnergyStorage();
 
         return be;
     }
@@ -54,7 +56,7 @@ public class BlockActivatorBlock extends BlockWithEntity {
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return checkType(type, ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, BlockActivatorBlockEntity::tick);
+        return checkType(type, ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, (world1, pos, state1, be) -> BlockActivatorBlockEntity.tick(world1, pos, state1, be));
     }
 
     @Override

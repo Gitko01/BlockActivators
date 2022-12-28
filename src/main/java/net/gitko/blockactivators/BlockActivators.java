@@ -17,6 +17,14 @@ import net.minecraft.util.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// v1.1.0 -> v1.2.0 Changelog
+//	- Fixed TechReborn Energy implementation for the Block Activator
+//	- Fixed energy percentage error for the Block Activator GUI
+//	- Fixed a bug where the Block Activator wouldn't activate when tick count was above tick interval amount
+//	- Balanced energy input rate and drain rate for the Block Activator
+//  - Added a recipe for the Block Activator
+//  - Added a block drop for the Block Activator
+
 
 public class BlockActivators implements ModInitializer {
 	public static final String MOD_ID = "blockactivators";
