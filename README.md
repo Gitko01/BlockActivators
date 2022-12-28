@@ -2,9 +2,8 @@
 ![Block Activators mod icon](/src/main/resources/assets/blockactivators/icon.png "Block Activators mod icon")
 ### A Minecraft mod made using Fabric that adds in a replica of the Autonomous Activator from Thermal Expansion
 
-This mod adds in a replica of the Autonomous Activator from Thermal Expansion.
-An autonomous activator is a block that automates left and right clicking
-blocks and entities with various items and blocks.
+An Autonomous Activator is a block that automates left and right clicking
+blocks and entities with various items and blocks using energy.
 
 # Download
 There are a couple places you can download this mod from.
@@ -24,6 +23,9 @@ There are a couple places you can download this mod from.
 - Added a recipe for the Block Activator
 - Added a block drop for the Block Activator
 
+# Wiki
+[https://gitko01.github.io/blockactivators_wiki/index.html](https://gitko01.github.io/blockactivators_wiki/index.html)
+
 # Bugs
 Please report all bugs to this GitHub repo's issues section.
 
@@ -35,3 +37,10 @@ The Autonomous Activator (the entire inspiration for this mod) was NOT made by m
 # Future Features / Versions
 - 1.19.1 and 1.19.3 coming soon
 - Tick interval modification (change how often the block activator updates)
+
+# Building Mod
+1. Download source code for this mod
+2. Unzip source code into a folder
+3. Open build.gradle in your favorite IDE __or__ the command line
+4. Run the build task in Gradle
+5. Check <mod_folder>/build/libs for this mod's .jar file (usually named block_activators-<mod_version>-<mc_version>)
