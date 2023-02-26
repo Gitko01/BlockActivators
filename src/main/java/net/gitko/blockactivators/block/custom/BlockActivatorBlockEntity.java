@@ -146,6 +146,9 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         // ENCHANTS AFFECTING MINING
 
         if (!world.isClient()) {
+            if (world.isReceivingRedstonePower(pos))
+                return;
+
             // mode 0: right click
             // mode 1: left click
             // mode 2: right click entity
@@ -212,7 +215,10 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     be.lastSelectedItem = -1;
                 }
 
+                int slot = -1;
+
                 for (ItemStack itemStack : items) {
+                    slot += 1;
                     if (itemStack != ItemStack.EMPTY && itemStack != Items.AIR.getDefaultStack() && itemStack.getCount() > 0) {
                         if (!be.roundRobin) {
                             itemToClickWith = itemStack;
@@ -288,6 +294,16 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         clickEntityLeft(entities, be);
                     }
                 }
+
+                ItemStack fakeInventoryItem = be.fakeServerPlayer.getInventory().main.get(0);
+
+                if (fakeInventoryItem == null)
+                    return;
+
+                if (fakeInventoryItem.getItem() == Items.AIR)
+                    return;
+
+                items.set(slot, fakeInventoryItem);
             }
         }
     }
