@@ -60,7 +60,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 2500, 0) {
         @Override
         protected void onFinalCommit() {
-            BlockActivatorBlockEntity.this.markDirty();
+            markDirty();
         }
     };
     private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
@@ -72,15 +72,15 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         @Override
         public int get(int index) {
             if (index == 0) {
-                return (int) BlockActivatorBlockEntity.this.energyStorage.getAmount();
+                return (int) energyStorage.getAmount();
             } else {
-                return (int) (ENERGY_DECRESE_PER_TICK_INTERVAL / BlockActivatorBlockEntity.this.tickInterval);
+                return (int) (ENERGY_DECRESE_PER_TICK_INTERVAL / tickInterval);
             }
         }
 
         @Override
         public void set(int index, int value) {
-            BlockActivatorBlockEntity.this.energyStorage.amount = value;
+            energyStorage.amount = value;
         }
 
         @Override
@@ -511,76 +511,76 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     @Override
     public DefaultedList<ItemStack> getItems() {
-        return this.items;
+        return items;
     }
 
     @Override
     public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
         // We provide *this* to the screenHandler as our class Implements Inventory
         // Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
-        return new BlockActivatorScreenHandler(syncId, playerInventory, this, this.energyAmountPropertyDelegate);
+        return new BlockActivatorScreenHandler(syncId, playerInventory, this, energyAmountPropertyDelegate);
     }
 
     @Override
     public Text getDisplayName() {
-        return Text.translatable(this.getCachedState().getBlock().getTranslationKey());
+        return Text.translatable(getCachedState().getBlock().getTranslationKey());
     }
 
     @Override
     public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, PacketByteBuf packetByteBuf) {
         // used in BlockActivatorScreenHandler
-        packetByteBuf.writeBlockPos(this.pos);
-        packetByteBuf.writeInt(this.mode);
-        packetByteBuf.writeBoolean(this.roundRobin);
+        packetByteBuf.writeBlockPos(pos);
+        packetByteBuf.writeInt(mode);
+        packetByteBuf.writeBoolean(roundRobin);
     }
 
     public int getDestroyTickCount() {
-        return this.destroyTickCount;
+        return destroyTickCount;
     }
 
     public void setDestroyTickCount(int destroyTickCount) {
-        this.destroyTickCount = destroyTickCount;
+        destroyTickCount = destroyTickCount;
     }
 
     public int getTickCount() {
-        return this.tickCount;
+        return tickCount;
     }
 
     public void setTickCount(int tickCount) {
-        this.tickCount = tickCount;
+        tickCount = tickCount;
     }
 
     public int getTickInterval() {
-        return this.tickInterval;
+        return tickInterval;
     }
 
     public void setTickInterval(int tickInterval) {
-        this.tickInterval = tickInterval;
+        tickInterval = tickInterval;
     }
 
     public void setMode(int modeID) {
-        this.mode = modeID;
+        mode = modeID;
     }
 
     public void setRoundRobin(boolean on) {
-        this.roundRobin = on;
+        roundRobin = on;
     }
 
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        Inventories.readNbt(nbt, this.items);
-        this.mode = nbt.getInt("mode");
-        this.roundRobin = nbt.getBoolean("roundRobin");
-        this.energyStorage.amount = nbt.getLong("energyAmount");
+        Inventories.readNbt(nbt, items);
+        mode = nbt.getInt("mode");
+        roundRobin = nbt.getBoolean("roundRobin");
+        energyStorage.amount = nbt.getLong("energyAmount");
     }
 
     @Override
     public void writeNbt(NbtCompound nbt) {
-        Inventories.writeNbt(nbt, this.items);
-        nbt.putInt("mode", this.mode);
-        nbt.putBoolean("roundRobin", this.roundRobin);
-        nbt.putLong("energyAmount", this.energyStorage.amount);
+        Inventories.writeNbt(nbt, items);
+        nbt.putInt("mode", mode);
+        nbt.putBoolean("roundRobin", roundRobin);
+        nbt.putLong("energyAmount", energyStorage.amount);
         super.writeNbt(nbt);
     }
 
@@ -592,13 +592,13 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     @Override
     public NbtCompound toInitialChunkDataNbt() {
-        return this.createNbt();
+        return createNbt();
     }
 
     public void sync() {
-        assert this.world != null;
-        if (!this.world.isClient()) {
-            this.world.markDirty(this.getPos());
+        assert world != null;
+        if (!world.isClient()) {
+            world.markDirty(getPos());
         }
     }
 
