@@ -9,6 +9,7 @@ import net.gitko.blockactivators.util.ImplementedInventory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -43,47 +44,43 @@ import team.reborn.energy.api.base.SimpleEnergyStorage;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static net.gitko.blockactivators.BlockActivators.createFakePlayerBuilder;
 
 public class BlockActivatorBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory {
-    public BlockActivatorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, pos, state);
-    }
-
-    private int tickCount = 0;
-    private int destroyTickCount = 0;
-    private int tickInterval = 10;
     private final static int ENERGY_DECRESE_PER_TICK_INTERVAL = 25;
-
-    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
-
-    private int lastSelectedItem = -1;
-
-    private boolean roundRobin = false;
-
+    private static final DefaultedList<BlockState> blocksBeingBroken = DefaultedList.ofSize(0);
+    // Int in the hashtable below is the ID of the block entity
+    private static final DefaultedList<Hashtable<Integer, Double>> blocksBeingBrokenProgresses = DefaultedList.ofSize(0);
+    private static final DefaultedList<BlockPos> blocksBeingBrokenPositions = DefaultedList.ofSize(0);
+    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocks = new Hashtable<>();
+    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocksBlockEntity = new Hashtable<>();
     // Create energy storage for block activator
     public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 2500, 0) {
         @Override
         protected void onFinalCommit() {
-            markDirty();
+            BlockActivatorBlockEntity.this.markDirty();
         }
     };
-
+    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
+    private int tickCount = 0;
+    private int destroyTickCount = 0;
+    private int tickInterval = 10;
     // Sync energy amount to the screen
     private final PropertyDelegate energyAmountPropertyDelegate = new PropertyDelegate() {
         @Override
         public int get(int index) {
             if (index == 0) {
-                return (int) energyStorage.getAmount();
+                return (int) BlockActivatorBlockEntity.this.energyStorage.getAmount();
             } else {
-                return (int) (ENERGY_DECRESE_PER_TICK_INTERVAL / tickInterval);
+                return (int) (ENERGY_DECRESE_PER_TICK_INTERVAL / BlockActivatorBlockEntity.this.tickInterval);
             }
         }
 
         @Override
         public void set(int index, int value) {
-            energyStorage.amount = value;
+            BlockActivatorBlockEntity.this.energyStorage.amount = value;
         }
 
         @Override
@@ -91,44 +88,15 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
             return 2;
         }
     };
-
+    private int lastSelectedItem = -1;
+    private boolean roundRobin = false;
     private int mode = 0;
-
     private Integer id = 0;
-
-    private static final DefaultedList<BlockState> blocksBeingBroken = DefaultedList.ofSize(0);
-    // Int in the hashtable below is the ID of the block entity
-    private static final DefaultedList<Hashtable<Integer, Double>> blocksBeingBrokenProgresses = DefaultedList.ofSize(0);
-    private static final DefaultedList<BlockPos> blocksBeingBrokenPositions = DefaultedList.ofSize(0);
-    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocks = new Hashtable<>();
-    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocksBlockEntity = new Hashtable<>();
-
-    @Override
-    public DefaultedList<ItemStack> getItems() {
-        return items;
-    }
-
-    @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        // We provide *this* to the screenHandler as our class Implements Inventory
-        // Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
-        return new BlockActivatorScreenHandler(syncId, playerInventory, this, this.energyAmountPropertyDelegate);
-    }
-
-    @Override
-    public Text getDisplayName() {
-        return Text.translatable(getCachedState().getBlock().getTranslationKey());
-    }
-
-    @Override
-    public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, PacketByteBuf packetByteBuf) {
-        // used in BlockActivatorScreenHandler
-        packetByteBuf.writeBlockPos(pos);
-        packetByteBuf.writeInt(mode);
-        packetByteBuf.writeBoolean(roundRobin);
-    }
-
     private FakeServerPlayer fakeServerPlayer = null;
+
+    public BlockActivatorBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, pos, state);
+    }
 
     public static void tick(World world, BlockPos pos, BlockState state, BlockActivatorBlockEntity be) {
         // MAJOR MEMORY LEAK --------------------------------------------------DONE
@@ -284,7 +252,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     DamageSource dmgSource = DamageSource.player(be.fakeServerPlayer);
                     List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, Box.from(posToHitVec3d), e -> (
                             !e.isInvulnerableTo(dmgSource) &&
-                            !e.isDead()
+                                    !e.isDead()
                     ));
 
                     if (entities.isEmpty()) {
@@ -304,6 +272,56 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     return;
 
                 items.set(slot, fakeInventoryItem);
+
+                for (int fakeInventorySlot = 1; fakeInventorySlot < be.fakeServerPlayer.getInventory().size(); fakeInventorySlot++) {
+                    ItemStack itemStack = be.fakeServerPlayer.getInventory().getStack(fakeInventorySlot);
+
+                    if (itemStack == null)
+                        continue;
+
+                    if (itemStack.getItem() == Items.AIR)
+                        continue;
+
+                    int nextAirSlot = -1;
+
+                    for (int itemsSlot = 0; itemsSlot < items.size(); itemsSlot++) {
+                        ItemStack item = items.get(itemsSlot);
+
+                        if (item == null)
+                            continue;
+
+                        if (item.getItem() != Items.AIR)
+                            continue;
+
+                        nextAirSlot = itemsSlot;
+                        break;
+                    }
+
+                    if (nextAirSlot == -1) {
+                        //TODO: Drop Item
+
+                        ItemEntity itemEntity = new ItemEntity(world, pos.getX() + .5, pos.getY() + 1.5, pos.getZ() + .5, itemStack);
+
+                        double xVelocity = ThreadLocalRandom.current().nextDouble(.2);
+
+                        if (ThreadLocalRandom.current().nextBoolean())
+                            xVelocity = -xVelocity;
+
+                        double zVelocity = ThreadLocalRandom.current().nextDouble(.2);
+
+                        if (ThreadLocalRandom.current().nextBoolean())
+                            zVelocity = -zVelocity;
+
+                        world.spawnEntity(itemEntity);
+
+                        itemEntity.setVelocity(new Vec3d(xVelocity, .2, zVelocity));
+                        continue;
+                    }
+
+                    items.set(nextAirSlot, itemStack);
+                }
+
+                be.fakeServerPlayer.getInventory().clear();
             }
         }
     }
@@ -326,7 +344,8 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         blocksBeingBrokenPositions.remove(blocksBeingBrokenPos);
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         Float breakSpeed = itemToClickWith.getMiningSpeedMultiplier(blockState);
@@ -347,7 +366,8 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     itemsBeingUsedToBreakBlocks.remove(item);
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // add item to click with into the array of items being used
         if (!itemsBeingUsedToBreakBlocks.containsKey(itemToClickWith)) {
@@ -471,7 +491,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     public static void clickEntityLeft(List<LivingEntity> entities, BlockActivatorBlockEntity be) {
         // left-click on an entity
-        for (LivingEntity entity: entities) {
+        for (LivingEntity entity : entities) {
             be.fakeServerPlayer.attack(entity);
             break;
         }
@@ -479,7 +499,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     public static void clickEntityRight(BlockActivatorBlockEntity be, List<LivingEntity> entities) {
         // right-click on an entity
-        for (LivingEntity entity: entities) {
+        for (LivingEntity entity : entities) {
             be.fakeServerPlayer.interact(entity, Hand.MAIN_HAND);
             break;
         }
@@ -489,8 +509,33 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         return !blockState.getMaterial().isLiquid() && blockState.getBlock() != Blocks.AIR && blockHardness != -1f;
     }
 
+    @Override
+    public DefaultedList<ItemStack> getItems() {
+        return this.items;
+    }
+
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        // We provide *this* to the screenHandler as our class Implements Inventory
+        // Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
+        return new BlockActivatorScreenHandler(syncId, playerInventory, this, this.energyAmountPropertyDelegate);
+    }
+
+    @Override
+    public Text getDisplayName() {
+        return Text.translatable(this.getCachedState().getBlock().getTranslationKey());
+    }
+
+    @Override
+    public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, PacketByteBuf packetByteBuf) {
+        // used in BlockActivatorScreenHandler
+        packetByteBuf.writeBlockPos(this.pos);
+        packetByteBuf.writeInt(this.mode);
+        packetByteBuf.writeBoolean(this.roundRobin);
+    }
+
     public int getDestroyTickCount() {
-        return destroyTickCount;
+        return this.destroyTickCount;
     }
 
     public void setDestroyTickCount(int destroyTickCount) {
@@ -498,7 +543,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     }
 
     public int getTickCount() {
-        return tickCount;
+        return this.tickCount;
     }
 
     public void setTickCount(int tickCount) {
@@ -506,7 +551,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     }
 
     public int getTickInterval() {
-        return tickInterval;
+        return this.tickInterval;
     }
 
     public void setTickInterval(int tickInterval) {
@@ -524,7 +569,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
-        Inventories.readNbt(nbt, items);
+        Inventories.readNbt(nbt, this.items);
         this.mode = nbt.getInt("mode");
         this.roundRobin = nbt.getBoolean("roundRobin");
         this.energyStorage.amount = nbt.getLong("energyAmount");
@@ -532,7 +577,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     @Override
     public void writeNbt(NbtCompound nbt) {
-        Inventories.writeNbt(nbt, items);
+        Inventories.writeNbt(nbt, this.items);
         nbt.putInt("mode", this.mode);
         nbt.putBoolean("roundRobin", this.roundRobin);
         nbt.putLong("energyAmount", this.energyStorage.amount);
@@ -547,13 +592,13 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     @Override
     public NbtCompound toInitialChunkDataNbt() {
-        return createNbt();
+        return this.createNbt();
     }
 
     public void sync() {
-        assert world != null;
-        if (!world.isClient()) {
-            world.markDirty(getPos());
+        assert this.world != null;
+        if (!this.world.isClient()) {
+            this.world.markDirty(this.getPos());
         }
     }
 
