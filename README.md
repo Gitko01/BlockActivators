@@ -2,7 +2,7 @@
 ![Block Activators mod icon](/src/main/resources/assets/blockactivators/icon.png "Block Activators mod icon")
 ### A Minecraft mod made using Fabric that adds in a replica of the Autonomous Activator from Thermal Expansion
 
-An Autonomous Activator is a block that automates left and right clicking
+An Autonomous Activator is a block that automates left and right-clicking
 blocks and entities with various items and blocks using energy.
 
 # Download
@@ -15,13 +15,9 @@ There are a couple places you can download this mod from.
 # Versions
 - 1.19.2 Fabric
 
-# Changelog (v1.1.0 -> v1.2.0)
-- Fixed TechReborn Energy implementation for the Block Activator
-- Fixed energy percentage error for the Block Activator GUI
-- Fixed a bug where the Block Activator wouldn't activate when tick count was above tick interval amount
-- Balanced energy input rate and drain rate for the Block Activator
-- Added a recipe for the Block Activator
-- Added a block drop for the Block Activator
+# Changelog (v1.2.0 -> v1.2.1)
+- Fixed a problem where using lava and water buckets would just throw away the buckets
+- Disable Block Activator if powered by redstone
 
 # Wiki
 [https://gitko01.github.io/blockactivators_wiki/index.html](https://gitko01.github.io/blockactivators_wiki/index.html)
