@@ -49,13 +49,21 @@ import java.util.concurrent.ThreadLocalRandom;
 import static net.gitko.blockactivators.BlockActivators.createFakePlayerBuilder;
 
 public class BlockActivatorBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory {
+    public BlockActivatorBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, pos, state);
+    }
+
+    private int tickCount = 0;
+    private int destroyTickCount = 0;
+    private int tickInterval = 10;
     private final static int ENERGY_DECRESE_PER_TICK_INTERVAL = 25;
-    private static final DefaultedList<BlockState> blocksBeingBroken = DefaultedList.ofSize(0);
-    // Int in the hashtable below is the ID of the block entity
-    private static final DefaultedList<Hashtable<Integer, Double>> blocksBeingBrokenProgresses = DefaultedList.ofSize(0);
-    private static final DefaultedList<BlockPos> blocksBeingBrokenPositions = DefaultedList.ofSize(0);
-    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocks = new Hashtable<>();
-    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocksBlockEntity = new Hashtable<>();
+
+    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
+
+    private int lastSelectedItem = -1;
+
+    private boolean roundRobin = false;
+
     // Create energy storage for block activator
     public final SimpleEnergyStorage energyStorage = new SimpleEnergyStorage(100000, 2500, 0) {
         @Override
@@ -63,10 +71,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
             markDirty();
         }
     };
-    private final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
-    private int tickCount = 0;
-    private int destroyTickCount = 0;
-    private int tickInterval = 10;
+
     // Sync energy amount to the screen
     private final PropertyDelegate energyAmountPropertyDelegate = new PropertyDelegate() {
         @Override
@@ -88,15 +93,44 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
             return 2;
         }
     };
-    private int lastSelectedItem = -1;
-    private boolean roundRobin = false;
-    private int mode = 0;
-    private Integer id = 0;
-    private FakeServerPlayer fakeServerPlayer = null;
 
-    public BlockActivatorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlocks.BLOCK_ACTIVATOR_BLOCK_ENTITY, pos, state);
+    private int mode = 0;
+
+    private Integer id = 0;
+
+    private static final DefaultedList<BlockState> blocksBeingBroken = DefaultedList.ofSize(0);
+    // Int in the hashtable below is the ID of the block entity
+    private static final DefaultedList<Hashtable<Integer, Double>> blocksBeingBrokenProgresses = DefaultedList.ofSize(0);
+    private static final DefaultedList<BlockPos> blocksBeingBrokenPositions = DefaultedList.ofSize(0);
+    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocks = new Hashtable<>();
+    private static final Hashtable<ItemStack, BlockPos> itemsBeingUsedToBreakBlocksBlockEntity = new Hashtable<>();
+
+    @Override
+    public DefaultedList<ItemStack> getItems() {
+        return items;
     }
+
+    @Override
+    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
+        // We provide *this* to the screenHandler as our class Implements Inventory
+        // Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
+        return new BlockActivatorScreenHandler(syncId, playerInventory, this, this.energyAmountPropertyDelegate);
+    }
+
+    @Override
+    public Text getDisplayName() {
+        return Text.translatable(getCachedState().getBlock().getTranslationKey());
+    }
+
+    @Override
+    public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, PacketByteBuf packetByteBuf) {
+        // used in BlockActivatorScreenHandler
+        packetByteBuf.writeBlockPos(pos);
+        packetByteBuf.writeInt(mode);
+        packetByteBuf.writeBoolean(roundRobin);
+    }
+
+    private FakeServerPlayer fakeServerPlayer = null;
 
     public static void tick(World world, BlockPos pos, BlockState state, BlockActivatorBlockEntity be) {
         // MAJOR MEMORY LEAK --------------------------------------------------DONE
@@ -298,7 +332,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     }
 
                     if (nextAirSlot == -1) {
-                        //TODO: Drop Item
+                        //Maybe opt for something different
 
                         ItemEntity itemEntity = new ItemEntity(world, pos.getX() + .5, pos.getY() + 1.5, pos.getZ() + .5, itemStack);
 
@@ -344,8 +378,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         blocksBeingBrokenPositions.remove(blocksBeingBrokenPos);
                     }
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
 
         Float breakSpeed = itemToClickWith.getMiningSpeedMultiplier(blockState);
@@ -366,8 +399,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     itemsBeingUsedToBreakBlocks.remove(item);
                 }
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
 
         // add item to click with into the array of items being used
         if (!itemsBeingUsedToBreakBlocks.containsKey(itemToClickWith)) {
@@ -491,7 +523,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     public static void clickEntityLeft(List<LivingEntity> entities, BlockActivatorBlockEntity be) {
         // left-click on an entity
-        for (LivingEntity entity : entities) {
+        for (LivingEntity entity: entities) {
             be.fakeServerPlayer.attack(entity);
             break;
         }
@@ -499,7 +531,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
 
     public static void clickEntityRight(BlockActivatorBlockEntity be, List<LivingEntity> entities) {
         // right-click on an entity
-        for (LivingEntity entity : entities) {
+        for (LivingEntity entity: entities) {
             be.fakeServerPlayer.interact(entity, Hand.MAIN_HAND);
             break;
         }
@@ -509,37 +541,12 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         return !blockState.getMaterial().isLiquid() && blockState.getBlock() != Blocks.AIR && blockHardness != -1f;
     }
 
-    @Override
-    public DefaultedList<ItemStack> getItems() {
-        return items;
-    }
-
-    @Override
-    public ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        // We provide *this* to the screenHandler as our class Implements Inventory
-        // Only the Server has the Inventory at the start, this will be synced to the client in the ScreenHandler
-        return new BlockActivatorScreenHandler(syncId, playerInventory, this, energyAmountPropertyDelegate);
-    }
-
-    @Override
-    public Text getDisplayName() {
-        return Text.translatable(getCachedState().getBlock().getTranslationKey());
-    }
-
-    @Override
-    public void writeScreenOpeningData(ServerPlayerEntity serverPlayerEntity, PacketByteBuf packetByteBuf) {
-        // used in BlockActivatorScreenHandler
-        packetByteBuf.writeBlockPos(pos);
-        packetByteBuf.writeInt(mode);
-        packetByteBuf.writeBoolean(roundRobin);
-    }
-
     public int getDestroyTickCount() {
         return destroyTickCount;
     }
 
     public void setDestroyTickCount(int destroyTickCount) {
-        destroyTickCount = destroyTickCount;
+        this.destroyTickCount = destroyTickCount;
     }
 
     public int getTickCount() {
@@ -547,7 +554,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     }
 
     public void setTickCount(int tickCount) {
-        tickCount = tickCount;
+        this.tickCount = tickCount;
     }
 
     public int getTickInterval() {
@@ -555,32 +562,32 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
     }
 
     public void setTickInterval(int tickInterval) {
-        tickInterval = tickInterval;
+        this.tickInterval = tickInterval;
     }
 
     public void setMode(int modeID) {
-        mode = modeID;
+        this.mode = modeID;
     }
 
     public void setRoundRobin(boolean on) {
-        roundRobin = on;
+        this.roundRobin = on;
     }
 
     @Override
     public void readNbt(NbtCompound nbt) {
         super.readNbt(nbt);
         Inventories.readNbt(nbt, items);
-        mode = nbt.getInt("mode");
-        roundRobin = nbt.getBoolean("roundRobin");
-        energyStorage.amount = nbt.getLong("energyAmount");
+        this.mode = nbt.getInt("mode");
+        this.roundRobin = nbt.getBoolean("roundRobin");
+        this.energyStorage.amount = nbt.getLong("energyAmount");
     }
 
     @Override
     public void writeNbt(NbtCompound nbt) {
         Inventories.writeNbt(nbt, items);
-        nbt.putInt("mode", mode);
-        nbt.putBoolean("roundRobin", roundRobin);
-        nbt.putLong("energyAmount", energyStorage.amount);
+        nbt.putInt("mode", this.mode);
+        nbt.putBoolean("roundRobin", this.roundRobin);
+        nbt.putLong("energyAmount", this.energyStorage.amount);
         super.writeNbt(nbt);
     }
 
