@@ -9,6 +9,7 @@ import net.gitko.blockactivators.util.ImplementedInventory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
@@ -43,6 +44,7 @@ import team.reborn.energy.api.base.SimpleEnergyStorage;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static net.gitko.blockactivators.BlockActivators.createFakePlayerBuilder;
 
@@ -144,6 +146,15 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         // BLOCK PLACE SETTING
         // SPLASH POTION / THROW MODE
         // ENCHANTS AFFECTING MINING
+        // MOVE NEW ITEMS FOR PLAYER INVENTORY INTO BLOCK ACTIVATOR INVENTORY (SYNC THE TWO INVENTORIES)
+        // REDSTONE MODES
+        // POINT UP AND DOWN
+        // REVISE ITEM DROPPING METHOD TO ENSURE NO DESPAWNS
+        // CLICKING WITH A STACK OF BUCKETS USES EVERY BUCKET IT CAN (COULD BE FIXED, BUT MAY BE LEFT IN)
+
+        // Thanks to TheBlackEntity for the many contributions to this mod!
+        // Contributions made in v1.2.1 and v1.2.2
+        // https://github.com/TheBlackEntity
 
         if (!world.isClient()) {
             if (world.isReceivingRedstonePower(pos))
@@ -304,6 +315,54 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                     return;
 
                 items.set(slot, fakeInventoryItem);
+
+                for (int fakeInventorySlot = 1; fakeInventorySlot < be.fakeServerPlayer.getInventory().size(); fakeInventorySlot++) {
+                    ItemStack itemStack = be.fakeServerPlayer.getInventory().getStack(fakeInventorySlot);
+
+                    if (itemStack == null)
+                        continue;
+
+                    if (itemStack.getItem() == Items.AIR)
+                        continue;
+
+                    int nextAirSlot = -1;
+
+                    for (int itemsSlot = 0; itemsSlot < items.size(); itemsSlot++) {
+                        ItemStack item = items.get(itemsSlot);
+
+                        if (item == null)
+                            continue;
+
+                        if (item.getItem() != Items.AIR)
+                            continue;
+
+                        nextAirSlot = itemsSlot;
+                        break;
+                    }
+
+                    if (nextAirSlot == -1) {
+                        ItemEntity itemEntity = new ItemEntity(world, pos.getX() + .5, pos.getY() + 1.5, pos.getZ() + .5, itemStack);
+
+                        double xVelocity = ThreadLocalRandom.current().nextDouble(.2);
+
+                        if (ThreadLocalRandom.current().nextBoolean())
+                            xVelocity = -xVelocity;
+
+                        double zVelocity = ThreadLocalRandom.current().nextDouble(.2);
+
+                        if (ThreadLocalRandom.current().nextBoolean())
+                            zVelocity = -zVelocity;
+
+                        world.spawnEntity(itemEntity);
+
+                        itemEntity.setVelocity(new Vec3d(xVelocity, .2, zVelocity));
+                        continue;
+                    }
+
+                    items.set(nextAirSlot, itemStack);
+                }
+
+                be.fakeServerPlayer.getInventory().clear();
             }
         }
     }

@@ -15,9 +15,8 @@ There are a couple places you can download this mod from.
 # Versions
 - 1.19.2 Fabric
 
-# Changelog (v1.2.0 -> v1.2.1)
-- Fixed a problem where using lava and water buckets would just throw away the buckets
-- Disable Block Activator if powered by redstone
+# Changelog (v1.2.1 -> v1.2.2)
+- Fix bucket stacking issue
 
 # Wiki
 [https://gitko01.github.io/blockactivators_wiki/index.html](https://gitko01.github.io/blockactivators_wiki/index.html)
