@@ -4,17 +4,28 @@
     "facing=east,anim=1":  { "model": "blockactivators:block/block_activator_1", "y":  90 },
     "facing=south,anim=1": { "model": "blockactivators:block/block_activator_1", "y": 180 },
     "facing=west,anim=1":  { "model": "blockactivators:block/block_activator_1", "y": 270 },
+    "facing=up,anim=1":  { "model": "blockactivators:block/block_activator_1", "x": 270 },
+    "facing=down,anim=1":  { "model": "blockactivators:block/block_activator_1", "x": 90 },
+
     "facing=north,anim=2": { "model": "blockactivators:block/block_activator_2" },
     "facing=east,anim=2":  { "model": "blockactivators:block/block_activator_2", "y":  90 },
     "facing=south,anim=2": { "model": "blockactivators:block/block_activator_2", "y": 180 },
     "facing=west,anim=2":  { "model": "blockactivators:block/block_activator_2", "y": 270},
+    "facing=up,anim=2":  { "model": "blockactivators:block/block_activator_2", "x": 270 },
+    "facing=down,anim=2":  { "model": "blockactivators:block/block_activator_2", "x": 90 },
+
     "facing=north,anim=3": { "model": "blockactivators:block/block_activator_3" },
     "facing=east,anim=3":  { "model": "blockactivators:block/block_activator_3", "y":  90},
     "facing=south,anim=3": { "model": "blockactivators:block/block_activator_3", "y": 180},
     "facing=west,anim=3":  { "model": "blockactivators:block/block_activator_3", "y": 270},
+    "facing=up,anim=3":  { "model": "blockactivators:block/block_activator_3", "x": 270 },
+    "facing=down,anim=3":  { "model": "blockactivators:block/block_activator_3", "x": 90 },
+
     "facing=north,anim=4": { "model": "blockactivators:block/block_activator_4" },
     "facing=east,anim=4":  { "model": "blockactivators:block/block_activator_4", "y":  90},
     "facing=south,anim=4": { "model": "blockactivators:block/block_activator_4", "y": 180},
-    "facing=west,anim=4":  { "model": "blockactivators:block/block_activator_4", "y": 270}
+    "facing=west,anim=4":  { "model": "blockactivators:block/block_activator_4", "y": 270},
+    "facing=up,anim=4":  { "model": "blockactivators:block/block_activator_4", "x": 270 },
+    "facing=down,anim=4":  { "model": "blockactivators:block/block_activator_4", "x": 90 }
   }
 }
