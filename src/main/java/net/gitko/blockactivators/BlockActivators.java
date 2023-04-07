@@ -9,22 +9,14 @@ import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.gitko.blockactivators.block.ModBlocks;
 import net.gitko.blockactivators.gui.BlockActivatorScreenHandler;
 import net.minecraft.entity.Entity;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-// v1.1.0 -> v1.2.0 Changelog
-//	- Fixed TechReborn Energy implementation for the Block Activator
-//	- Fixed energy percentage error for the Block Activator GUI
-//	- Fixed a bug where the Block Activator wouldn't activate when tick count was above tick interval amount
-//	- Balanced energy input rate and drain rate for the Block Activator
-//  - Added a recipe for the Block Activator
-//  - Added a block drop for the Block Activator
-
 
 public class BlockActivators implements ModInitializer {
 	public static final String MOD_ID = "blockactivators";
@@ -38,7 +30,7 @@ public class BlockActivators implements ModInitializer {
 		LOGGER.info("[Block Activators] Mod initialized.");
 
 		ModBlocks.registerModBlocks();
-		Registry.register(Registry.SCREEN_HANDLER, new Identifier("block_activator_screen_handler"), BLOCK_ACTIVATOR_SCREEN_HANDLER);
+		Registry.register(Registries.SCREEN_HANDLER, new Identifier("block_activator_screen_handler"), BLOCK_ACTIVATOR_SCREEN_HANDLER);
 	}
 
 	public static FakePlayerBuilder createFakePlayerBuilder() {

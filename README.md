@@ -14,9 +14,10 @@ There are a couple places you can download this mod from.
 
 # Versions
 - 1.19.2 Fabric
+- 1.19.4 Fabric
 
-# Changelog (v1.2.1 -> v1.2.2)
-- Fix bucket stacking issue
+# Changelog (v1.2.2 -> v1.3.0)
+- Added support for the Block Activators facing up and down
 
 # Wiki
 [https://gitko01.github.io/blockactivators_wiki/index.html](https://gitko01.github.io/blockactivators_wiki/index.html)
@@ -30,7 +31,6 @@ The Autonomous Activator (the entire inspiration for this mod) was NOT made by m
 [Fake Player API](https://github.com/CafeteriaGuild/fake-player-api)
 
 # Future Features / Versions
-- 1.19.1 and 1.19.3 coming soon
 - Tick interval modification (change how often the block activator updates)
 
 # Building Mod

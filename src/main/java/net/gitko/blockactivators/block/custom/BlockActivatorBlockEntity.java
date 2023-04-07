@@ -18,9 +18,9 @@ import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.Packet;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
@@ -37,7 +37,6 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
-import org.jetbrains.annotations.Nullable;
 import team.reborn.energy.api.EnergyStorage;
 import team.reborn.energy.api.base.SimpleEnergyStorage;
 
@@ -266,7 +265,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         world.setBlockState(pos, state.with(IntProperty.of("anim", 1, 4), world.getBlockState(pos).get(IntProperty.of("anim", 1, 4)) - 1));
                     }
 
-                    DamageSource dmgSource = DamageSource.player(be.fakeServerPlayer);
+                    DamageSource dmgSource = world.getDamageSources().playerAttack(be.fakeServerPlayer);
                     List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, Box.from(posToHitVec3d), e -> (
                             //e.getType() != EntityType.PLAYER &&
                             //e.getType() != EntityType.ARMOR_STAND &&
@@ -292,7 +291,7 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
                         world.setBlockState(pos, state.with(IntProperty.of("anim", 1, 4), world.getBlockState(pos).get(IntProperty.of("anim", 1, 4)) + 1));
                     }
 
-                    DamageSource dmgSource = DamageSource.player(be.fakeServerPlayer);
+                    DamageSource dmgSource = world.getDamageSources().playerAttack(be.fakeServerPlayer);
                     List<LivingEntity> entities = world.getEntitiesByClass(LivingEntity.class, Box.from(posToHitVec3d), e -> (
                             !e.isInvulnerableTo(dmgSource) &&
                             !e.isDead()
@@ -598,7 +597,6 @@ public class BlockActivatorBlockEntity extends BlockEntity implements Implemente
         super.writeNbt(nbt);
     }
 
-    @Nullable
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {
         return BlockEntityUpdateS2CPacket.create(this);
