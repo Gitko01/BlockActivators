@@ -1,3 +1,6 @@
+# NO LONGER BEING UPDATED!
+# MERGED INTO THIS MOD: https://github.com/Gitko01/Hullabaloo  
+
 # Block Activators
 ![Block Activators mod icon](/src/main/resources/assets/blockactivators/icon.png "Block Activators mod icon")
 ### A Minecraft mod made using Fabric that adds in a replica of the Autonomous Activator from Thermal Expansion
